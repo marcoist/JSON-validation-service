@@ -1,2 +1,11 @@
 *.class
 *.log
+*.iml
+.idea/
+target
+target/
+.bloop
+.metals/
+*.sbt.template
+.bsp/
+
