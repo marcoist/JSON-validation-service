@@ -3,8 +3,7 @@ package controllers
 import model.Response.SchemaResult
 
 import javax.inject._
-import play.api._
-import play.api.libs.json.{JsValue, Json, Reads}
+import play.api.libs.json.Json
 import play.api.mvc._
 import service.SchemaService
 
@@ -24,20 +23,16 @@ class SchemaController @Inject()(
     val maybeJson = request.body.asJson
     maybeJson.map{jsonSchema =>
       service.uploadSchema(schemaId, jsonSchema).map {
-        case Some(_) => toSuccessResult(schemaId, "uploadSchema")
+        case Some(_) => toCreatedResult(schemaId, "uploadSchema")
         case None => toBadResult("uploadSchema", schemaId, "Error uploading the schema")
       }
-    }.getOrElse(Future.successful(BadRequest(Json
-      .toJson(
-        SchemaResult(action = "uploadSchema",id = schemaId, status = "error", message = Some("Invalid JSON"))
-      )
-      .toString())))
+    }.getOrElse(Future.successful(toBadResult("uploadSchema", schemaId, "Invalid JSON")))
   }
 
   def downloadSchema(schemaId: String): Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
     service.downloadSchema(schemaId).map {
       case Some(jsValue) => Ok(jsValue.toString())
-      case None => toBadResult("downloadSchema", schemaId, "Schema not found")
+      case None => toNotFoundResult("downloadSchema", schemaId, "Schema not found")
     }
   }
 
@@ -45,14 +40,11 @@ class SchemaController @Inject()(
     val maybeJson = request.body.asJson
     maybeJson.map{json =>
       service.validateSchema(schemaId, json).map {
-        case Left(error) =>  toBadResult("validateSchema", schemaId, error)
+        case Left(error) if error.contains(schemaId) => toNotFoundResult("validateSchema", schemaId, error)
+        case Left(error) => toBadResult("validateSchema", schemaId, error)
         case Right(_) => toSuccessResult(schemaId, "validateSchema")
       }
-    }.getOrElse(Future.successful(BadRequest(Json
-      .toJson(
-        SchemaResult(action = "uploadSchema",id = schemaId, status = "error", message = Some("Invalid JSON"))
-      )
-      .toString())))
+    }.getOrElse(Future.successful(toBadResult("validateSchema", schemaId, "Invalid JSON")))
   }
 
   private def toSuccessResult(schemaId: String, action: String) = {
@@ -65,8 +57,28 @@ class SchemaController @Inject()(
     )
   }
 
+  private def toCreatedResult(schemaId: String, action: String) = {
+    Created(
+      Json
+        .toJson(
+          SchemaResult(action = action,id = schemaId, status = "success")
+        )
+        .toString()
+    )
+  }
+
   private def toBadResult(schemaId: String, action: String, error: String) = {
     BadRequest(
+      Json
+        .toJson(
+          SchemaResult(action = action,id = schemaId, status = "error", message = Some(error))
+        )
+        .toString()
+    )
+  }
+
+  private def toNotFoundResult(schemaId: String, action: String, error: String) = {
+    NotFound(
       Json
         .toJson(
           SchemaResult(action = action,id = schemaId, status = "error", message = Some(error))

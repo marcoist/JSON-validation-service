@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.github.fge.jackson.JsonLoader
 import com.github.fge.jsonschema.main.JsonSchemaFactory
 import dao.SchemaDao
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsNull, JsObject, JsValue, Json}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -49,12 +49,14 @@ class SchemaService @Inject() (
   }
 
   private def validateJson(jsonSchema: String, json: JsValue): Either[String, JsValue] ={
+    val updatedJson = removeNullFromJson(json)
+
     (for {
       jSchemaNone <- buildJsonNode(jsonSchema)
-      jsonNode <- buildJsonNode(json.toString())
+      jsonNode <- buildJsonNode(updatedJson.toString())
     } yield {
       val result = JsonSchemaFactory.byDefault.getJsonSchema(jSchemaNone).validate(jsonNode)
-      if(result.isSuccess) Right(json) else {
+      if(result.isSuccess) Right(updatedJson) else {
         var message = ""
         val iterator = result.iterator()
         while (iterator.hasNext){
@@ -84,4 +86,15 @@ class SchemaService @Inject() (
         None
     }
   }
+
+  private def removeNullFromJson(json: JsValue): JsValue =
+    json match {
+      case JsObject(f) =>
+        JsObject(f.flatMap {
+          case (_, JsNull) => None
+          case _ @ (name, nestedValue) =>
+            Some(name -> removeNullFromJson(nestedValue))
+        })
+      case other => other
+    }
 }
