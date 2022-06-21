@@ -2,5 +2,7 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# An example controller showing a sample home page
-GET     /                                   controllers.SchemaController.index()
+POST    /schema/:schemaId      controllers.SchemaController.uploadSchema(schemaId: String)
+GET     /schema/:schemaId      controllers.SchemaController.downloadSchema(schemaId: String)
+
+POST    /validate/:schemaId    controllers.SchemaController.validateSchema(schemaId: String)
