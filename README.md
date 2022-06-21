@@ -53,3 +53,11 @@ To start the server you just need to run the following command on the root of th
 ```
 $ sbt run
 ```
+
+### Tests:
+
+I have just added 3 simple tests, to run them just execute the following command on the root of the project:
+
+```
+$ sbt test
+```
