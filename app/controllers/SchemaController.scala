@@ -14,14 +14,15 @@ import scala.concurrent.{ExecutionContext, Future}
  * application's home page.
  */
 @Singleton
-class SchemaController @Inject()(
+class SchemaController @Inject() (
   cc: ControllerComponents,
   service: SchemaService,
-)(implicit val ec: ExecutionContext) extends AbstractController(cc) {
+)(implicit val ec: ExecutionContext)
+    extends AbstractController(cc) {
 
   def uploadSchema(schemaId: String): Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
     val maybeJson = request.body.asJson
-    maybeJson.map{jsonSchema =>
+    maybeJson.map { jsonSchema =>
       service.uploadSchema(schemaId, jsonSchema).map {
         case Some(_) => toCreatedResult(schemaId, "uploadSchema")
         case None => toBadResult("uploadSchema", schemaId, "Error uploading the schema")
@@ -38,7 +39,7 @@ class SchemaController @Inject()(
 
   def validateSchema(schemaId: String): Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
     val maybeJson = request.body.asJson
-    maybeJson.map{json =>
+    maybeJson.map { json =>
       service.validateSchema(schemaId, json).map {
         case Left(error) if error.contains(schemaId) => toNotFoundResult("validateSchema", schemaId, error)
         case Left(error) => toBadResult("validateSchema", schemaId, error)
@@ -51,7 +52,7 @@ class SchemaController @Inject()(
     Ok(
       Json
         .toJson(
-          SchemaResult(action = action,id = schemaId, status = "success")
+          SchemaResult(action = action, id = schemaId, status = "success")
         )
         .toString()
     )
@@ -61,7 +62,7 @@ class SchemaController @Inject()(
     Created(
       Json
         .toJson(
-          SchemaResult(action = action,id = schemaId, status = "success")
+          SchemaResult(action = action, id = schemaId, status = "success")
         )
         .toString()
     )
@@ -71,7 +72,7 @@ class SchemaController @Inject()(
     BadRequest(
       Json
         .toJson(
-          SchemaResult(action = action,id = schemaId, status = "error", message = Some(error))
+          SchemaResult(action = action, id = schemaId, status = "error", message = Some(error))
         )
         .toString()
     )
@@ -81,7 +82,7 @@ class SchemaController @Inject()(
     NotFound(
       Json
         .toJson(
-          SchemaResult(action = action,id = schemaId, status = "error", message = Some(error))
+          SchemaResult(action = action, id = schemaId, status = "error", message = Some(error))
         )
         .toString()
     )

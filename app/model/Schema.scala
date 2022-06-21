@@ -2,7 +2,7 @@ package model
 
 import play.api.libs.json.{Format, Json}
 
-case class Schema (
+case class Schema(
   schemaId: String,
   jsonSchema: String,
 )

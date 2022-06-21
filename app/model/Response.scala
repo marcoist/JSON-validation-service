@@ -3,7 +3,8 @@ package model
 import play.api.libs.json.JsonConfiguration.Aux
 import play.api.libs.json.{Format, Json, JsonConfiguration, OptionHandlers}
 
-object Response{
+object Response {
+
   /**
    * Default Option Handlers
    * Uses readNullable and writesNullable
@@ -17,11 +18,7 @@ object Response{
     message: Option[String] = None
   )
 
-  object SchemaResult{
+  object SchemaResult {
     implicit val apiConfigFormat: Format[SchemaResult] = Json.format[SchemaResult]
   }
 }
-
-
-
-

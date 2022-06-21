@@ -14,14 +14,17 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class SchemaService @Inject() (
   val dao: SchemaDao
-)(implicit ec: ExecutionContext) extends Logging {
+)(implicit ec: ExecutionContext)
+    extends Logging {
 
-  def uploadSchema(schemaId: String, jsonSchema: JsValue): Future[Option[JsValue]] ={
+  def uploadSchema(schemaId: String, jsonSchema: JsValue): Future[Option[JsValue]] = {
     dao.insertSchema(schemaId, jsonSchema.toString()).map {
-      case Some(result) => if(result.wasAcknowledged()) Some(jsonSchema) else {
-        logger.error("Error uploading jsonSchema")
-        None
-      }
+      case Some(result) =>
+        if (result.wasAcknowledged()) Some(jsonSchema)
+        else {
+          logger.error("Error uploading jsonSchema")
+          None
+        }
       case None =>
         logger.error("Error uploading jsonSchema")
         None
@@ -48,7 +51,7 @@ class SchemaService @Inject() (
     }
   }
 
-  private def validateJson(jsonSchema: String, json: JsValue): Either[String, JsValue] ={
+  private def validateJson(jsonSchema: String, json: JsValue): Either[String, JsValue] = {
     val updatedJson = removeNullFromJson(json)
 
     (for {
@@ -56,10 +59,11 @@ class SchemaService @Inject() (
       jsonNode <- buildJsonNode(updatedJson.toString())
     } yield {
       val result = JsonSchemaFactory.byDefault.getJsonSchema(jSchemaNone).validate(jsonNode)
-      if(result.isSuccess) Right(updatedJson) else {
+      if (result.isSuccess) Right(updatedJson)
+      else {
         var message = ""
         val iterator = result.iterator()
-        while (iterator.hasNext){
+        while (iterator.hasNext) {
           message = s"$message ${iterator.next().getMessage}"
         }
         Left(message)
@@ -70,7 +74,7 @@ class SchemaService @Inject() (
   private def buildJsonNode(json: String): Option[JsonNode] = {
     try {
       Some(JsonLoader.fromString(json))
-    }catch {
+    } catch {
       case _: JsonParseException =>
         logger.error("Unable to parse json")
         None
@@ -80,7 +84,7 @@ class SchemaService @Inject() (
   private def parseJson(json: String): Option[JsValue] = {
     try {
       Some(Json.parse(json))
-    }catch {
+    } catch {
       case _: JsonParseException =>
         logger.error("Unable to parse json")
         None
@@ -92,7 +96,7 @@ class SchemaService @Inject() (
       case JsObject(f) =>
         JsObject(f.flatMap {
           case (_, JsNull) => None
-          case _ @ (name, nestedValue) =>
+          case _ @(name, nestedValue) =>
             Some(name -> removeNullFromJson(nestedValue))
         })
       case other => other

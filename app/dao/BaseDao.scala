@@ -12,10 +12,13 @@ import scala.concurrent.{ExecutionContext, Future}
 trait BaseDao extends Logging {
 
   protected def seqFromTO[T, D](
-      convert: T => Future[D]
-  )(tos: Seq[T])(implicit ec: ExecutionContext): Future[Seq[D]]=
+    convert: T => Future[D]
+  )(tos: Seq[T])(implicit ec: ExecutionContext): Future[Seq[D]] =
     Future.sequence(tos.map(convert))
 
+  /**
+   * Used to read the documents from the db
+   */
   private val codecRegistry: CodecRegistry = fromRegistries(
     fromProviders(
       classOf[Schema],

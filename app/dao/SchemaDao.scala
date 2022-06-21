@@ -9,12 +9,11 @@ import play.api.libs.json.JsValue
 
 import scala.concurrent.Future
 
-class SchemaDao extends BaseDao with Logging{
-
+class SchemaDao extends BaseDao with Logging {
 
   val collection: MongoCollection[Document] = database.getCollection("jschemas")
 
-  def findSchemaById(schemaId: String): Future[Option[Schema]] ={
+  def findSchemaById(schemaId: String): Future[Option[Schema]] = {
     collection.find[Schema](equal("schemaId", schemaId)).first().toFutureOption()
   }
 
