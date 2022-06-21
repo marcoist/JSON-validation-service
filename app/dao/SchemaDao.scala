@@ -1,8 +1,8 @@
 package dao
 
 import Commons.Logging
-import org.mongodb.scala._
 import model.Schema
+import org.mongodb.scala._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.result.InsertOneResult
 import play.api.libs.json.JsValue
@@ -18,16 +18,15 @@ class SchemaDao extends BaseDao with Logging{
     collection.find[Schema](equal("schemaId", schemaId)).first().toFutureOption()
   }
 
-  def insertSchema(schemaId: String, jsonSchema: JsValue): Future[Option[InsertOneResult]] = {
+  def insertSchema(schemaId: String, jsonSchema: String): Future[Option[InsertOneResult]] = {
     val dJsonSchema = schemaToDocument(schemaId, jsonSchema)
     collection.insertOne(dJsonSchema).toFutureOption()
-
   }
 
-  private def schemaToDocument(schemaId: String, jsonSchema: JsValue) = {
+  private def schemaToDocument(schemaId: String, jsonSchema: String) = {
     Document(
       "schemaId" -> schemaId,
-      "jsonSchema" -> jsonSchema.toString()
+      "jsonSchema" -> jsonSchema
     )
   }
 }

@@ -8,7 +8,7 @@ import play.api.libs.json.{JsValue, Json, Reads}
 import play.api.mvc._
 import service.SchemaService
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -21,17 +21,17 @@ class SchemaController @Inject()(
 )(implicit val ec: ExecutionContext) extends AbstractController(cc) {
 
   def uploadSchema(schemaId: String): Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
-    val maybeJson = request.body.asJson.map(_.toString())
+    val maybeJson = request.body.asJson
     maybeJson.map{jsonSchema =>
       service.uploadSchema(schemaId, jsonSchema).map {
         case Some(_) => toSuccessResult(schemaId, "uploadSchema")
-        case None => ???
+        case None => toBadResult("uploadSchema", schemaId, "Error uploading the schema")
       }
-    }.getOrElse(BadRequest(Json
+    }.getOrElse(Future.successful(BadRequest(Json
       .toJson(
         SchemaResult(action = "uploadSchema",id = schemaId, status = "error", message = Some("Invalid JSON"))
       )
-      .toString()))
+      .toString())))
   }
 
   def downloadSchema(schemaId: String): Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
@@ -41,8 +41,18 @@ class SchemaController @Inject()(
     }
   }
 
-  def validateSchema(schemaId: String): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
-    Ok
+  def validateSchema(schemaId: String): Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
+    val maybeJson = request.body.asJson
+    maybeJson.map{json =>
+      service.validateSchema(schemaId, json).map {
+        case Left(error) =>  toBadResult("validateSchema", schemaId, error)
+        case Right(_) => toSuccessResult(schemaId, "validateSchema")
+      }
+    }.getOrElse(Future.successful(BadRequest(Json
+      .toJson(
+        SchemaResult(action = "uploadSchema",id = schemaId, status = "error", message = Some("Invalid JSON"))
+      )
+      .toString())))
   }
 
   private def toSuccessResult(schemaId: String, action: String) = {
